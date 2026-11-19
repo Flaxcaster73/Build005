@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVAJ Functions Calculator</title>
+<style>
+  :root{
+    --green: #254035;
+    --green-soft: #2f4d40;
+    --white: #ffffff;
+    --black: #111111;
+    --coffee: #6f4e37;
+    --coffee-light: #c8a165;
+    --line: #4a6b5a;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --white: #ffffff;
+      --black: #111111;
+    }
+  }
+  :root[data-theme="dark"]{
+    --white: #ffffff;
+    --black: #111111;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0;
+    padding:0;
+    background: var(--white);
+    color: var(--black);
+    font-family: "Times New Roman", Times, serif;
+  }
+
+  .page-shell{
+    max-width: 1300px;
+    margin: 0 auto;
+    padding-top: clamp(1rem, 3vw, 1.75rem);
+    padding-right: clamp(0.85rem, 2.5vw, 1.25rem);
+    padding-left: clamp(0.85rem, 2.5vw, 1.25rem);
+    padding-bottom: 0;
+  }
+
+  /* ---------- HEADER (flush top/sides, square corners) ---------- */
+  header.site-header{
+    background: var(--green);
+    color: var(--white);
+    padding: 2rem 1rem 0 1rem;
+    text-align: center;
+  }
+
+  header.site-header h1{
+    margin: 0;
+    font-family: "Times New Roman", Times, serif;
+    font-weight: 700;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    letter-spacing: 1px;
+    color: var(--white);
+  }
+
+  header.site-header h2.author-name{
+    margin: 0.6rem 0 1.4rem 0;
+    font-family: "Times New Roman", Times, serif;
+    font-weight: 400;
+    font-style: italic;
+    font-size: clamp(1rem, 2.4vw, 1.3rem);
+    color: var(--white);
+  }
+
+  header.site-header .divider{
+    border: none;
+    border-top: 2px solid var(--white);
+    opacity: 0.6;
+    margin: 0;
+  }
+
+  nav.site-nav{
+    background: var(--green);
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1rem;
+  }
+
+  nav.site-nav a{
+    font-family: "Times New Roman", Times, serif;
+    color: var(--white);
+    text-decoration: none;
+    font-size: 0.95rem;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--white);
+    background: transparent;
+    border-radius: 8px;
+  }
+
+  nav.site-nav a:hover{
+    background: rgba(255,255,255,0.12);
+  }
+
+  nav.site-nav a.active{
+    background: var(--white);
+    color: var(--green);
+    font-weight: 700;
+    border-color: var(--white);
+  }
+
+  /* ---------- PAGE WRAP (spaced cards) ---------- */
+  .page-wrap{
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(0.85rem, 2.5vw, 1.25rem);
+  }
+
+  /* ---------- MAIN CONTENT ---------- */
+  main{
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 2.5rem clamp(1.5rem, 5vw, 3rem);
+    border-radius: 22px;
+    border: 1px solid rgba(37, 64, 53, 0.14);
+    box-shadow: 0 10px 28px rgba(17, 17, 17, 0.06);
+  }
+
+  main .main-inner{
+    max-width: 720px;
+  }
+
+  main h2{
+    color: var(--black);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 0;
+  }
+
+  main h3{
+    color: var(--black);
+    font-weight: 400;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    text-align: justify;
+    margin: 0 0 1.1rem 0;
+  }
+
+  main .btn{
+    display: inline-block;
+    margin-top: 0.8rem;
+    background: var(--green);
+    color: var(--white);
+    text-decoration: none;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 1rem;
+    padding: 0.7rem 1.4rem;
+    border: 1px solid var(--green);
+    border-radius: 10px;
+  }
+
+  main .btn:hover{
+    background: var(--white);
+    color: var(--green);
+  }
+
+  main .main-image{
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 14px;
+    margin-top: 0.5rem;
+  }
+  
+  
+  /* ===== INICIO: bloque de las figuras (2 por fila + click para ver completa) ===== */
+  /* Antes: display:flex (se acomodaban solas, a veces 3 por fila).
+     Ahora: display:grid con 2 columnas fijas, así siempre caen de 2 en 2
+     y las que sobran arman una fila nueva automáticamente. */
+  main .figures-row{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin: 0 0 1.5rem 0;
+  }
+
+  main .figure-item{
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* El <a> que envuelve la imagen es lo que permite abrirla en pestaña nueva.
+     Se le pone display:block para que ocupe el mismo espacio que la imagen. */
+  main .figure-item a{
+    display: block;
+    width: 100%;
+  }
+
+  /* Pequeño efecto al pasar el mouse / enfocar, para que se note que es clicleable */
+  main .figure-item a:hover img,
+  main .figure-item a:focus img{
+    opacity: 0.9;
+  }
+
+  main .figure-item img{
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 14px;
+    display: block;
+  }
+
+  main .figure-item figcaption{
+    margin-top: 0.6rem;
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--black);
+  }
+  /* ===== FIN: bloque de las figuras ===== */
+  
+  main ul.example-list{
+    font-family: "STIX Two Text", "Cambria Math", Cambria, Georgia, serif;
+    text-align: center;
+    list-style-position: inside;
+    padding: 0;
+    margin: 0 0 1.1rem 0;
+    color: var(--black);
+    font-size: 1.15rem;
+    line-height: 1.8;
+  }
+ 
+  main ul.example-list li{
+    padding: 0.4rem 0;
+    font-style: italic;
+  }
+ 
+  main .frac{
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 0.25em;
+    line-height: 1.15;
+  }
+ 
+  main .frac .num{
+    border-bottom: 1.5px solid currentColor;
+    padding: 0 0.15em 0.05em;
+  }
+ 
+  main .frac .den{
+    padding: 0.05em 0.15em 0;
+  }
+  
+  
+  /* aqui va lo de la otra lista */
+  
+  ul.left-list{
+  list-style: none;
+  text-align: left;
+  padding: 0;
+  margin: 0 0 1.1rem 0;
+}
+
+ul.left-list li{
+  font-size: 1.05rem;
+  line-height: 1.7;
+  position: relative;
+  padding-left: 1.5em;
+  margin-bottom: 0.5rem;
+}
+
+ul.left-list li::before{
+  content: "❖";
+  position: absolute;
+  left: 0;
+  color: var(--green);
+}
+  
+
+  /* ---------- ASIDE ---------- */
+  aside{
+    flex: 0 0 340px;
+    background: var(--green);
+    padding: 1.75rem;
+    border-radius: 22px;
+  }
+
+  aside h3.panel-title{
+    margin: 0 0 0.6rem 0;
+    color: var(--white);
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  aside hr{
+    border: none;
+    border-top: 2px solid var(--white);
+    opacity: 0.6;
+    margin: 0 0 1.2rem 0;
+  }
+
+  aside h4.eyebrow{
+    margin: 0 0 0.6rem 0;
+    color: var(--white);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  aside .book-cover-placeholder{
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    border: 1px dashed var(--white);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--white);
+    font-size: 0.85rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  aside h4.book-title,
+  aside h4.book-author{
+    margin: 0;
+    font-weight: 400;
+    font-size: 0.95rem;
+    color: var(--white);
+  }
+
+  aside h4.book-author{
+    margin-bottom: 0.8rem;
+  }
+
+  aside a.amazon-link{
+    color: var(--coffee-light);
+    text-decoration: underline;
+    font-size: 0.95rem;
+  }
+  
+  
+  aside .book-cover{
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  display: block;
+  border-radius: 14px;
+  margin-bottom: 1rem;
+}
+  
+  
+
+  /* ---------- FOOTER (flush bottom/sides, square corners) ---------- */
+  footer{
+    background: var(--green);
+    color: var(--white);
+    padding: 1rem 1.75rem;
+    margin-top: clamp(1rem, 3vw, 1.75rem);
+  }
+
+  footer p{
+    margin: 0;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 800px){
+    .page-wrap{
+      flex-direction: column;
+    }
+    aside{
+      flex-basis: auto;
+      width: 100%;
+    }
+    main .figures-row{
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  
+  /*Esto ultimo solo es relacionado al boton de la cacluladora*/
+  
+  main .btn-center{
+  text-align: center;
+  margin: 1.75rem 0;
+}
+  
+
+
+  /* =====================================================================
+     INICIO: CALCULADORA SVAJ (todo lo de abajo es nuevo, solo para esta pagina)
+     ===================================================================== */
+
+  /* La calculadora usa todo el ancho del main (no los 720px del texto) */
+  main .main-inner.calc-page{
+    max-width: none;
+  }
+
+  main .calc-intro{
+    max-width: 720px;
+  }
+
+  /* Tarjeta verde oscuro que contiene toda la calculadora */
+  .calc-card{
+    background: var(--green);
+    color: var(--white);
+    border-radius: 18px;
+    padding: clamp(1.1rem, 3vw, 1.75rem);
+    margin-top: 1.25rem;
+  }
+
+  /* ---- Botones de seleccion de algoritmo (tabs) ---- */
+  .calc-tabs{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .calc-tab{
+    font-family: "Times New Roman", Times, serif;
+    font-size: 1rem;
+    color: rgba(255,255,255,0.75);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 0.75rem 0.5rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .calc-tab:hover{
+    background: rgba(255,255,255,0.06);
+    color: var(--white);
+  }
+
+  /* Tab seleccionado: borde punteado y color cafe claro (como en la imagen) */
+  .calc-tab.active{
+    color: var(--coffee-light);
+    border: 1px dashed var(--coffee-light);
+    background: rgba(200,161,101,0.08);
+  }
+
+  .calc-tab:focus-visible,
+  .calc-btn:focus-visible,
+  .calc-input:focus-visible{
+    outline: 2px solid var(--coffee-light);
+    outline-offset: 2px;
+  }
+
+  /* ---- Descripcion del algoritmo seleccionado ---- */
+  .calc-desc{
+    margin: 1.1rem 0 1.25rem 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .calc-desc strong{
+    color: var(--white);
+  }
+
+  /* ---- Entrada de h + boton Calcular ---- */
+  .calc-label{
+    display: block;
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 0.45rem;
+  }
+
+  .calc-input-row{
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .calc-input{
+    flex: 1 1 160px;
+    width: 100%;
+    min-width: 0;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 1.35rem;
+    color: var(--white);
+    background: var(--green-soft);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+  }
+
+  .calc-btn{
+    flex: 0 0 auto;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--green);
+    background: var(--white);
+    border: 1px solid var(--white);
+    border-radius: 12px;
+    padding: 0.8rem 1.6rem;
+    cursor: pointer;
+  }
+
+  .calc-btn:hover{
+    background: var(--coffee-light);
+    border-color: var(--coffee-light);
+  }
+
+  .calc-btn:disabled{
+    opacity: 0.6;
+    cursor: wait;
+  }
+
+  .calc-status{
+    min-height: 1.4em;
+    margin: 0.75rem 0 0 0;
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.75);
+  }
+
+  .calc-status.error{
+    color: #f2b8a2;
+  }
+
+  /* ---- Resultados ---- */
+  .calc-results{
+    margin-top: 1.25rem;
+    border: 1px dashed var(--line);
+    border-radius: 14px;
+    padding: 1.25rem;
+  }
+
+  .calc-results[hidden]{
+    display: none;
+  }
+
+  .calc-results h4{
+    margin: 0 0 0.9rem 0;
+    font-size: 1.1rem;
+    color: var(--white);
+  }
+
+  .calc-values{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .calc-value{
+    background: var(--green-soft);
+    border-radius: 12px;
+    padding: 0.8rem 0.9rem;
+  }
+
+  .calc-value .name{
+    display: block;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.75);
+  }
+
+  .calc-value .num{
+    display: block;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--coffee-light);
+    font-variant-numeric: tabular-nums;
+    margin: 0.2rem 0 0.1rem 0;
+    word-break: break-all;
+  }
+
+  .calc-value .unit{
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.6);
+  }
+
+  /* Imagen de los diagramas SVAJ (click para verla completa) */
+  .calc-figure{
+    margin: 0 0 1rem 0;
+  }
+
+  .calc-figure a{
+    display: block;
+  }
+
+  .calc-figure img{
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    background: #f1f1f1;
+  }
+
+  .calc-figure a:hover img{
+    opacity: 0.92;
+  }
+
+  .calc-figure figcaption{
+    margin-top: 0.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* Botones de descarga */
+  .calc-downloads{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .calc-downloads a{
+    flex: 1 1 200px;
+    text-align: center;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 1rem;
+    color: var(--white);
+    text-decoration: none;
+    border: 1px solid var(--white);
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+  }
+
+  .calc-downloads a:hover{
+    background: var(--white);
+    color: var(--green);
+  }
+
+  .calc-footnote{
+    margin: 1rem 0 0 0;
+    text-align: center;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.55);
+  }
+
+  /* Campo para el nombre del analisis */
+  .calc-field{
+    margin-bottom: 1rem;
+  }
+
+  .calc-input-text{
+    font-size: 1.1rem;
+  }
+
+  .calc-input-text::placeholder{
+    color: rgba(255,255,255,0.45);
+  }
+
+  @media (max-width: 800px){
+    .calc-tabs{
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .calc-values{
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 420px){
+    .calc-values{
+      grid-template-columns: 1fr;
+    }
+  }
+  /* ===== FIN: CALCULADORA SVAJ ===== */
+
+</style>
+</head>
+<body>
+
+  <header class="site-header">
+    <h1>SVAJ FUNCTIONS CALCULATOR</h1>
+    <h2 class="author-name">Juan Manuel Gonzalez — PhD</h2>
+    <hr class="divider">
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="calculadora.html" class="active">Interface</a>
+    </nav>
+  </header>
+
+  <div class="page-shell">
+
+    <div class="page-wrap">
+
+      <main>
+        <div class="main-inner calc-page">
+
+          <div class="calc-intro">
+            <h2>SVAJ Calculator</h2>
+            <h3>
+            
+            </h3>
+          </div>
+
+          <!-- ===== INICIO: CALCULADORA ===== -->
+          <section class="calc-card" aria-label="SVAJ calculator">
+
+            <!-- Botones para elegir el algoritmo -->
+            <div class="calc-tabs" role="tablist" aria-label="Algorithm">
+              <button class="calc-tab active" role="tab" aria-selected="true"  data-algo="cycloidal">Cycloidal</button>
+              <button class="calc-tab"        role="tab" aria-selected="false" data-algo="trapezoidal">Modified trapezoidal</button>
+              <button class="calc-tab"        role="tab" aria-selected="false" data-algo="sine">Modified sine</button>
+              <button class="calc-tab"        role="tab" aria-selected="false" data-algo="poly345">3-4-5 Polynomial</button>
+              <button class="calc-tab"        role="tab" aria-selected="false" data-algo="poly4567">4-5-6-7 Polynomial</button>
+              <button class="calc-tab"        role="tab" aria-selected="false" data-algo="singledwell">Single dwell Polynomial</button>
+            </div>
+
+            <!-- Descripcion del algoritmo seleccionado (se llena con JavaScript) -->
+            <p class="calc-desc" id="calc-desc"></p>
+
+            <!-- Nombre del analisis (opcional): lo heredan la imagen y el Excel -->
+            <div class="calc-field">
+              <label class="calc-label" for="name-input">Analysis name (optional)</label>
+              <input class="calc-input calc-input-text" id="name-input" type="text" maxlength="60" autocomplete="off">
+            </div>
+
+            <!-- Variable: h -->
+            <label class="calc-label" for="h-input">h — Total rise or lift (mm)</label>
+            <div class="calc-input-row">
+              <input class="calc-input" id="h-input" type="number" value="25.4" min="0.001" max="1000" step="any" inputmode="decimal">
+              <button class="calc-btn" id="calc-btn" type="button">Calculate</button>
+            </div>
+            <p class="calc-status" id="calc-status" role="status"></p>
+
+            <!-- Resultados (ocultos hasta que se calcula) -->
+            <div class="calc-results" id="calc-results" hidden>
+              <h4 id="results-title">Results</h4>
+
+              <div class="calc-values">
+                <div class="calc-value"><span class="name">Max Velocity</span><span class="num" data-key="Max_Velocity">—</span><span class="unit">mm/rad</span></div>
+                <div class="calc-value"><span class="name">Max Acceleration</span><span class="num" data-key="Max_Acceleration">—</span><span class="unit">mm/rad²</span></div>
+                <div class="calc-value"><span class="name">Max Jerk</span><span class="num" data-key="Max_Jerk">—</span><span class="unit">mm/rad³</span></div>
+                <div class="calc-value"><span class="name">Min Velocity</span><span class="num" data-key="Min_Velocity">—</span><span class="unit">mm/rad</span></div>
+                <div class="calc-value"><span class="name">Min Acceleration</span><span class="num" data-key="Min_Acceleration">—</span><span class="unit">mm/rad²</span></div>
+                <div class="calc-value"><span class="name">Min Jerk</span><span class="num" data-key="Min_Jerk">—</span><span class="unit">mm/rad³</span></div>
+              </div>
+
+              <figure class="calc-figure">
+                <a id="img-link" href="#" target="_blank" rel="noopener">
+                  <img id="svaj-img" alt="SVAJ diagrams">
+                </a>
+                <figcaption>Click the image to open it full size</figcaption>
+              </figure>
+
+              <div class="calc-downloads">
+                <a id="dl-img" href="#" download>Download diagrams (.png)</a>
+                <a id="dl-xlsx" href="#" download>Download data (.xlsx)</a>
+              </div>
+            </div>
+
+            <p class="calc-footnote"> 
+              
+            </p>
+          </section>
+          <!-- ===== FIN: CALCULADORA ===== -->
+
+        </div>
+      </main>
+
+      <aside>
+        <h3 class="panel-title">Reference Panel</h3>
+        <hr>
+        <h4 class="eyebrow">Recommended Book</h4>
+        <img src="imagenes/libro.jpeg" alt="FreeCAD Essentials book cover" class="book-cover">
+        <h4 class="book-title">FreeCAD Essentials</h4>
+        <h4 class="book-author">Juan M. Gonzalez</h4>
+        <a href="https://a.co/d/02vtfwdV" class="amazon-link">View in Amazon →</a>
+      </aside>
+
+    </div>
+
+  </div>
+
+  <footer>
+    <p>© 2026 ALL RIGHTS RESERVED. Juan M. Gonzalez</p>
+  </footer>
+
+<script>
+  /* ===== Logica de la calculadora ===== */
+
+  // Descripcion de cada algoritmo
+  const ALGOS = {
+    cycloidal:   { name: "Cycloidal displacement",            file: "SVAJ Cycloidal", desc: "" },
+    trapezoidal: { name: "Modified Trapezoidal Acceleration", file: "SVAJ Modified trapezoidal", desc: "" },
+    sine:        { name: "Modified Sine Acceleration",        file: "SVAJ Modified sine", desc: "" },
+    poly345:     { name: "3-4-5 Polynomial",                  file: "SVAJ 3-4-5 Polynomial", desc: "" },
+    poly4567:    { name: "4-5-6-7 Polynomial",                file: "SVAJ 4-5-6-7 Polynomial", desc: "" },
+    singledwell: { name: "Single dwell Polynomial",           file: "SVAJ Single dwell Polynomial", desc: "" }
+  };
+
+  const tabs      = document.querySelectorAll(".calc-tab");
+  const desc      = document.getElementById("calc-desc");
+  const hInput    = document.getElementById("h-input");
+  const nameInput = document.getElementById("name-input");
+  const btn       = document.getElementById("calc-btn");
+  const statusEl  = document.getElementById("calc-status");
+  const results   = document.getElementById("calc-results");
+  const title     = document.getElementById("results-title");
+  const img       = document.getElementById("svaj-img");
+  const imgLink   = document.getElementById("img-link");
+  const dlImg     = document.getElementById("dl-img");
+  const dlXlsx    = document.getElementById("dl-xlsx");
+
+  let currentAlgo = "cycloidal";
+  let blobUrls = [];
+
+  function setStatus(text, isError){
+    statusEl.textContent = text;
+    statusEl.classList.toggle("error", !!isError);
+  }
+
+  function showDesc(){
+    const a = ALGOS[currentAlgo];
+    desc.innerHTML = "<strong>" + a.name + ".</strong> " + a.desc;
+    nameInput.placeholder = a.file;   // nombre por defecto de los archivos
+  }
+
+  // Cambiar de algoritmo
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      tabs.forEach(t => { t.classList.remove("active"); t.setAttribute("aria-selected", "false"); });
+      tab.classList.add("active");
+      tab.setAttribute("aria-selected", "true");
+      currentAlgo = tab.dataset.algo;
+      showDesc();
+      results.hidden = true;     // los resultados anteriores eran de otro algoritmo
+      setStatus("");
+    });
+  });
+
+  // Convierte el base64 que manda el servidor en un archivo descargable
+  function base64ToBlob(b64, type){
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: type });
+  }
+
+  function fmt(x){
+    return Number(x).toLocaleString("en-US", { maximumFractionDigits: 4 });
+  }
+
+  async function calcular(){
+    const h = parseFloat(hInput.value);
+    if (!isFinite(h) || h <= 0 || h > 1000){
+      setStatus("Please enter a value of h between 0.001 and 1000 mm.", true);
+      hInput.focus();
+      return;
+    }
+
+    btn.disabled = true;
+    setStatus("Calculating " + ALGOS[currentAlgo].name + " with h = " + h + " mm…");
+
+    try {
+      const resp = await fetch("/api/calcular", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ algoritmo: currentAlgo, h: h, nombre: nameInput.value })
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(data.error || "Server error (" + resp.status + ").");
+
+      // Valores Max / Min
+      document.querySelectorAll(".calc-value .num").forEach(el => {
+        const v = data.valores[el.dataset.key];
+        el.textContent = (v === undefined) ? "—" : fmt(v);
+      });
+
+      // Liberar archivos del calculo anterior
+      blobUrls.forEach(u => URL.revokeObjectURL(u));
+      const imgUrl  = URL.createObjectURL(base64ToBlob(data.imagen, "image/png"));
+      const xlsxUrl = URL.createObjectURL(base64ToBlob(data.excel,
+                      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+      blobUrls = [imgUrl, xlsxUrl];
+
+      img.src = imgUrl;
+      imgLink.href = imgUrl;
+      dlImg.href = imgUrl;
+      dlImg.download = data.imagen_nombre;
+      dlXlsx.href = xlsxUrl;
+      dlXlsx.download = data.excel_nombre;
+
+      title.textContent = ALGOS[currentAlgo].name + " — h = " + data.h + " mm";
+      results.hidden = false;
+      setStatus("Done.");
+    } catch (err) {
+      setStatus(err.message || "Could not connect to the server.", true);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  btn.addEventListener("click", calcular);
+  hInput.addEventListener("keydown", e => { if (e.key === "Enter") calcular(); });
+  nameInput.addEventListener("keydown", e => { if (e.key === "Enter") calcular(); });
+
+  showDesc();
+</script>
+
+</body>
+</html>

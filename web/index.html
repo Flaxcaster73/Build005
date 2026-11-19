@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVAJ Functions Calculator</title>
+<style>
+  :root{
+    --green: #254035;
+    --green-soft: #2f4d40;
+    --white: #ffffff;
+    --black: #111111;
+    --coffee: #6f4e37;
+    --coffee-light: #c8a165;
+    --line: #4a6b5a;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --white: #ffffff;
+      --black: #111111;
+    }
+  }
+  :root[data-theme="dark"]{
+    --white: #ffffff;
+    --black: #111111;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0;
+    padding:0;
+    background: var(--white);
+    color: var(--black);
+    font-family: "Times New Roman", Times, serif;
+  }
+
+  .page-shell{
+    max-width: 1300px;
+    margin: 0 auto;
+    padding-top: clamp(1rem, 3vw, 1.75rem);
+    padding-right: clamp(0.85rem, 2.5vw, 1.25rem);
+    padding-left: clamp(0.85rem, 2.5vw, 1.25rem);
+    padding-bottom: 0;
+  }
+
+  /* ---------- HEADER (flush top/sides, square corners) ---------- */
+  header.site-header{
+    background: var(--green);
+    color: var(--white);
+    padding: 2rem 1rem 0 1rem;
+    text-align: center;
+  }
+
+  header.site-header h1{
+    margin: 0;
+    font-family: "Times New Roman", Times, serif;
+    font-weight: 700;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    letter-spacing: 1px;
+    color: var(--white);
+  }
+
+  header.site-header h2.author-name{
+    margin: 0.6rem 0 1.4rem 0;
+    font-family: "Times New Roman", Times, serif;
+    font-weight: 400;
+    font-style: italic;
+    font-size: clamp(1rem, 2.4vw, 1.3rem);
+    color: var(--white);
+  }
+
+  header.site-header .divider{
+    border: none;
+    border-top: 2px solid var(--white);
+    opacity: 0.6;
+    margin: 0;
+  }
+
+  nav.site-nav{
+    background: var(--green);
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1rem;
+  }
+
+  nav.site-nav a{
+    font-family: "Times New Roman", Times, serif;
+    color: var(--white);
+    text-decoration: none;
+    font-size: 0.95rem;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--white);
+    background: transparent;
+    border-radius: 8px;
+  }
+
+  nav.site-nav a:hover{
+    background: rgba(255,255,255,0.12);
+  }
+
+  nav.site-nav a.active{
+    background: var(--white);
+    color: var(--green);
+    font-weight: 700;
+    border-color: var(--white);
+  }
+
+  /* ---------- PAGE WRAP (spaced cards) ---------- */
+  .page-wrap{
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(0.85rem, 2.5vw, 1.25rem);
+  }
+
+  /* ---------- MAIN CONTENT ---------- */
+  main{
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 2.5rem clamp(1.5rem, 5vw, 3rem);
+    border-radius: 22px;
+    border: 1px solid rgba(37, 64, 53, 0.14);
+    box-shadow: 0 10px 28px rgba(17, 17, 17, 0.06);
+  }
+
+  main .main-inner{
+    max-width: 720px;
+  }
+
+  main h2{
+    color: var(--black);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 0;
+  }
+
+  main h3{
+    color: var(--black);
+    font-weight: 400;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    text-align: justify;
+    margin: 0 0 1.1rem 0;
+  }
+
+  main .btn{
+    display: inline-block;
+    margin-top: 0.8rem;
+    background: var(--green);
+    color: var(--white);
+    text-decoration: none;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 1rem;
+    padding: 0.7rem 1.4rem;
+    border: 1px solid var(--green);
+    border-radius: 10px;
+  }
+
+  main .btn:hover{
+    background: var(--white);
+    color: var(--green);
+  }
+
+  main .main-image{
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 14px;
+    margin-top: 0.5rem;
+  }
+  
+  
+  /* ===== INICIO: bloque de las figuras (2 por fila + click para ver completa) ===== */
+  /* Antes: display:flex (se acomodaban solas, a veces 3 por fila).
+     Ahora: display:grid con 2 columnas fijas, así siempre caen de 2 en 2
+     y las que sobran arman una fila nueva automáticamente. */
+  main .figures-row{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin: 0 0 1.5rem 0;
+  }
+
+  main .figure-item{
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* El <a> que envuelve la imagen es lo que permite abrirla en pestaña nueva.
+     Se le pone display:block para que ocupe el mismo espacio que la imagen. */
+  main .figure-item a{
+    display: block;
+    width: 100%;
+  }
+
+  /* Pequeño efecto al pasar el mouse / enfocar, para que se note que es clicleable */
+  main .figure-item a:hover img,
+  main .figure-item a:focus img{
+    opacity: 0.9;
+  }
+
+  main .figure-item img{
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 14px;
+    display: block;
+  }
+
+  main .figure-item figcaption{
+    margin-top: 0.6rem;
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--black);
+  }
+  /* ===== FIN: bloque de las figuras ===== */
+  
+  main ul.example-list{
+    font-family: "STIX Two Text", "Cambria Math", Cambria, Georgia, serif;
+    text-align: center;
+    list-style-position: inside;
+    padding: 0;
+    margin: 0 0 1.1rem 0;
+    color: var(--black);
+    font-size: 1.15rem;
+    line-height: 1.8;
+  }
+ 
+  main ul.example-list li{
+    padding: 0.4rem 0;
+    font-style: italic;
+  }
+ 
+  main .frac{
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 0.25em;
+    line-height: 1.15;
+  }
+ 
+  main .frac .num{
+    border-bottom: 1.5px solid currentColor;
+    padding: 0 0.15em 0.05em;
+  }
+ 
+  main .frac .den{
+    padding: 0.05em 0.15em 0;
+  }
+  
+  
+  /* aqui va lo de la otra lista */
+  
+  ul.left-list{
+  list-style: none;
+  text-align: left;
+  padding: 0;
+  margin: 0 0 1.1rem 0;
+}
+
+ul.left-list li{
+  font-size: 1.05rem;
+  line-height: 1.7;
+  position: relative;
+  padding-left: 1.5em;
+  margin-bottom: 0.5rem;
+}
+
+ul.left-list li::before{
+  content: "❖";
+  position: absolute;
+  left: 0;
+  color: var(--green);
+}
+  
+
+  /* ---------- ASIDE ---------- */
+  aside{
+    flex: 0 0 340px;
+    background: var(--green);
+    padding: 1.75rem;
+    border-radius: 22px;
+  }
+
+  aside h3.panel-title{
+    margin: 0 0 0.6rem 0;
+    color: var(--white);
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  aside hr{
+    border: none;
+    border-top: 2px solid var(--white);
+    opacity: 0.6;
+    margin: 0 0 1.2rem 0;
+  }
+
+  aside h4.eyebrow{
+    margin: 0 0 0.6rem 0;
+    color: var(--white);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  aside .book-cover-placeholder{
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    border: 1px dashed var(--white);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--white);
+    font-size: 0.85rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  aside h4.book-title,
+  aside h4.book-author{
+    margin: 0;
+    font-weight: 400;
+    font-size: 0.95rem;
+    color: var(--white);
+  }
+
+  aside h4.book-author{
+    margin-bottom: 0.8rem;
+  }
+
+  aside a.amazon-link{
+    color: var(--coffee-light);
+    text-decoration: underline;
+    font-size: 0.95rem;
+  }
+  
+  
+  aside .book-cover{
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  display: block;
+  border-radius: 14px;
+  margin-bottom: 1rem;
+}
+  
+  
+
+  /* ---------- FOOTER (flush bottom/sides, square corners) ---------- */
+  footer{
+    background: var(--green);
+    color: var(--white);
+    padding: 1rem 1.75rem;
+    margin-top: clamp(1rem, 3vw, 1.75rem);
+  }
+
+  footer p{
+    margin: 0;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 800px){
+    .page-wrap{
+      flex-direction: column;
+    }
+    aside{
+      flex-basis: auto;
+      width: 100%;
+    }
+    main .figures-row{
+      grid-template-columns: 1fr;
+    }
+  }
+  /* Ecuaciones renderizadas con MathJax (sin viñetas) */
+  main .equation-block{
+    text-align: center;
+    font-size: 1.15rem;
+    margin: 0 0 1.1rem 0;
+  }
+</style>
+<script>
+  window.MathJax = { tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] } };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+
+  <header class="site-header">
+    <h1>SVAJ FUNCTIONS CALCULATOR</h1>
+    <h2 class="author-name">Juan Manuel Gonzalez — PhD</h2>
+    <hr class="divider">
+    <nav class="site-nav">
+      <a href="index.html" class="active">Home</a>
+      <a href="#cam-follower">Cam and follower diagram</a>
+      <a href="#clasificacion">Classification</a>
+      <a href="#diagrama">SVAJ diagrams</a>
+      <a href="#ley">Fundamental law</a>
+      <a href="interfaznueva.html">Interface</a>
+    </nav>
+  </header>
+
+  <div class="page-shell">
+
+    <div class="page-wrap">
+
+      <main>
+        <div class="main-inner">
+          <h2 id="cam-follower">Cam and follower diagram</h2>
+          <h3>
+            
+          </h3>
+          <h3>
+            
+          </h3>
+          <img src="imagenes/inicio.png" alt="Cam and follower diagram" class="main-image">
+		  <figcaption><center>Figure 1: Cam and follower diagram</center></figcaption>
+		  <br>
+		  <br>
+		  
+		  <h2 id="clasificacion">Classification of Cam-follower systems</h2>
+		  <br>
+		  <img src="imagenes/mapa.png" alt="Classification of cam-follower systems" class="main-image">
+		  <br>
+		  <figcaption><center>Figure 2: Classification of cam-follower systems</center></figcaption>
+		  <br>
+		  
+		  <h2 id="diagrama">SVAJ diagrams</h2>
+		  <h3>
+		  Mechanical engineers and cam designers need to choose certain mathematical functions that define the motion of the cam follower. 
+		  We typically plot these functions, i.e., displacement, s, velocity, v, acceleration, a, and jerk, j, as functions of the independent variable 𝜃, the camshaft angle. They are defined as follows:
+		  </h3>
+		  
+		  <div class="equation-block">
+\[ v = \frac{ds}{d\theta} \]
+\[ a = \frac{d^{2}s}{d\theta^{2}} \]
+\[ j = \frac{d^{3}s}{d\theta^{3}} \]
+</div>
+		  
+		  <br>
+		  <h3>
+			If we assume the angular velocity of the camshaft, ω, to be constant, then the relationship between θ and t, is simply:
+		  </h3>
+		  
+		  <div class="equation-block">
+\[ \theta = \omega t \]
+</div>
+		  
+		  <h3>
+			And we call these graphs, defined for 360 degrees of the camshaft rotation, the SVAJ diagrams.
+		  </h3>
+		  <br>
+		  <h3>
+			Here, six algorithms for the calculation of the SVAJ diagrams have been included, i.e., five for Rise-Dwell-Fall-Dwell (RDFD) and one for Rise-Fall-Dwell (RFD) motion programs, namely:
+		  </h3>
+		  
+		  <ul class="left-list">
+			<li>Cycloidal displacement</li>
+			<li>Modified Trapezoidal Acceleration</li>
+			<li>Modified Sine Acceleration</li>
+			<li>3-4-5 Polynomial</li>
+			<li>4-5-6-7 Polynomial</li>
+			<li>Single dwell Polynomial</li>
+		</ul>
+		
+		<br>
+		
+		<h2 id="ley">Fundamental law of cam design</h2>
+		<br>
+		<h3>
+		The algorithms take the following laws into consideration:
+		</h3>
+		<ul class="left-list">
+			<li>
+			Functions that describe displacement, s, velocity, v, and acceleration, a, must be continuous across the interval -- 360 degrees.
+			</li>
+			<li>
+			The function that describes jerk, j, must be finite across the interval --360 degrees.
+			</li>
+		</ul>
+		<br>
+		
+		<h3>
+		This is exemplified on Figures 3 - 8, for the cases of Cycloidal displacement, Modified Trapezoidal Acceleration, Modified Sine Acceleration, 3-4-5 Polynomial, 4-5-6-7 Polynomial, and a Single dwell Polynomial, where acceleration is continuous across the interval, while jerk is finite.
+		</h3>
+		
+		
+		 <!-- Cada imagen va envuelta en un <a target="_blank">: eso es lo que hace
+		      que al hacer click se abra la imagen completa en una pestaña nueva -->
+		 <div class="figures-row">
+
+
+            <figure class="figure-item">
+              <a href="imagenes/z - Cycloidal displacement.png" target="_blank" rel="noopener noreferrer">
+                <img src="imagenes/z - Cycloidal displacement.png" alt="SVAJ functions Cycloidal Displacement">
+              </a>
+              <figcaption>Figure 3: SVAJ functions for Cycloidal Displacement</figcaption>
+            </figure>
+			
+			
+			
+            <figure class="figure-item">
+              <a href="imagenes/z - Modified Trapezoidal Acceleration.png" target="_blank" rel="noopener noreferrer">
+                <img src="imagenes/z - Modified Trapezoidal Acceleration.png" alt="SVAJ functions Modified Trapezoidal Acceleration">
+              </a>
+              <figcaption>Figure 4: SVAJ functions for Modified Trapezoidal Acceleration</figcaption>
+            </figure>
+			
+			
+			<figure class="figure-item">
+              <a href="imagenes/z - Modified Sine Acceleration.png" target="_blank" rel="noopener noreferrer">
+                <img src="imagenes/z - Modified Sine Acceleration.png" alt="SVAJ functions Modified Sine Acceleration">
+              </a>
+              <figcaption>Figure 5: SVAJ functions for Modified Sine Acceleration</figcaption>
+            </figure>
+			
+			
+			<figure class="figure-item">
+              <a href="imagenes/z - 3-4-5 Polynomial.png" target="_blank" rel="noopener noreferrer">
+                <img src="imagenes/z - 3-4-5 Polynomial.png" alt="SVAJ functions 3-4-5 Polynomial">
+              </a>
+              <figcaption>Figure 6: SVAJ functions for 3-4-5 Polynomial</figcaption>
+            </figure>
+			
+			
+			<figure class="figure-item">
+              <a href="imagenes/z - 4-5-6-7 Polynomial.png" target="_blank" rel="noopener noreferrer">
+                <img src="imagenes/z - 4-5-6-7 Polynomial.png" alt="SVAJ functions 4-5-6-7 Polynomial">
+              </a>
+              <figcaption>Figure 7: SVAJ functions for 4-5-6-7 Polynomial</figcaption>
+            </figure>
+			
+			
+			<figure class="figure-item">
+              <a href="imagenes/z - Single dwell Polynomial.png" target="_blank" rel="noopener noreferrer">
+                <img src="imagenes/z - Single dwell Polynomial.png" alt="SVAJ functions Single dwell Polynomial">
+              </a>
+              <figcaption>Figure 8: SVAJ functions for Single dwell Polynomial</figcaption>
+            </figure>
+
+
+          </div>
+		
+		  
+        </div>
+      </main>
+
+      <aside>
+        <h3 class="panel-title">Reference Panel</h3>
+        <hr>
+        <h4 class="eyebrow">Recommended Book</h4>
+        <img src="imagenes/libro.jpeg" alt="FreeCAD Essentials book cover" class="book-cover">
+        <h4 class="book-title">FreeCAD Essentials</h4>
+        <h4 class="book-author">Juan M. Gonzalez</h4>
+        <a href="https://a.co/d/02vtfwdV" class="amazon-link">View in Amazon →</a>
+      </aside>
+
+    </div>
+
+  </div>
+
+  <footer>
+    <p>© 2026 ALL RIGHTS RESERVED. Juan M. Gonzalez</p>
+  </footer>
+
+</body>
+</html>
